@@ -11,22 +11,24 @@ from typing import List
 
 def filter_datum(fields: List[str], redaction: str, message: str,
                  separator: str) -> str:
-    """filter_datum function"""
+    """filter datum function"""
     return re.sub(f'({"|".join(fields)})=[^{separator}]*',
                   f'\\1={redaction}', message)
 
 
 class RedactingFormatter(logging.Formatter):
-    """RedactingFormatter class"""
+    """Redacting Formatter class"""
     REDACTION = "***"
     FORMAT = "[HOLBERTON] %(name)s %(levelname)s %(asctime)-15s: %(message)s"
     SEPARATOR = ";"
 
     def __init__(self, fields: List[str]):
+        """initializing the RedactingFormatter Class"""
         super(RedactingFormatter, self).__init__(self.FORMAT)
         self.fields = fields
 
     def format(self, record: logging.LogRecord) -> str:
+        """formatting the record"""
         log_message = super().format(record)
         return filter_datum(
             self.fields,
@@ -39,6 +41,7 @@ PII_FIELDS = ("name", "email", "phone", "ssn", "password")
 
 
 def get_logger() -> logging.Logger:
+    """The logger function that returns the logger object"""
     logger = logging.getLogger("user_data")
     logger.setLevel(logging.INFO)
     logger.propagate = False
@@ -51,6 +54,7 @@ def get_logger() -> logging.Logger:
 
 
 def get_db() -> mysql.connector.connection.MySQLConnection:
+    """Connection to the MySQL environment"""
     username = os.getenv("PERSONAL_DATA_DB_USERNAME", "root")
     password = os.getenv("PERSONAL_DATA_DB_PASSWORD", "")
     host = os.getenv("PERSONAL_DATA_DB_HOST", "localhost")
@@ -65,6 +69,7 @@ def get_db() -> mysql.connector.connection.MySQLConnection:
 
 
 def main():
+    """This is the main method"""
     db = get_db()
     cursor = db.cursor()
     cursor.execute("SELECT * FROM users;")
@@ -73,7 +78,8 @@ def main():
 
     for row in cursor:
         message = "; ".join(
-            [f"{field}={value}" for field, value in zip(cursor.column_names, row)])
+            [f"{field}={value}" for field,
+             value in zip(cursor.column_names, row)])
         logger.info(message)
 
     cursor.close()
